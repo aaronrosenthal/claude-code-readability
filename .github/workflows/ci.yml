@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: node --test tests/unit/ tests/integration/
+      - run: node scripts/dev/test.mjs
 
   lint:
     runs-on: ubuntu-latest
