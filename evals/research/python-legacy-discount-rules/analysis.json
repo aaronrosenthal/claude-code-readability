@@ -1,0 +1,22 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "legacy code modification",
+    "preserving necessary context"
+  ],
+  "targets": [
+    "pricing/discounts.py"
+  ],
+  "tests": [
+    "tests/test_discounts.py"
+  ],
+  "testCommand": "python3 -m unittest discover -s tests -v",
+  "initialTestsPass": false,
+  "preserve": [
+    "# COMPAT: the Brightway partner feed sends quantities as strings",
+    "# REGULATORY: consumer-pricing rule 14(b)",
+    "# ERP: invoices are rounded half-even"
+  ],
+  "notes": "A good solution adds a named constant and a small rate function in the style of the existing ones and includes it in combined_rate before the cap. The COMPAT, REGULATORY and ERP comments carry constraints the code cannot express and must survive verbatim; the narrating or stale comments are fair game either way. Unrelated functions should not be rewritten."
+}

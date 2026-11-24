@@ -1,0 +1,11 @@
+{
+  "language": "rust",
+  "toolchain": "cargo",
+  "scenarios": ["error handling"],
+  "targets": ["src/config.rs"],
+  "tests": ["tests/config.rs"],
+  "testCommand": "cargo test",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution separates reading lines into key/value settings (with line numbers, unknown and duplicate detection) from converting each value, keeps the existing ConfigError variants, and implements Display and Error without unwrap/panics on bad input. Regressions: editing the test file or error variants, panicking on malformed input, losing line numbers."
+}

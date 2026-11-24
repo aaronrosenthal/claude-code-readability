@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "financial calculations"
+  ],
+  "targets": [
+    "src/proration.ts"
+  ],
+  "tests": [
+    "test/proration.test.ts"
+  ],
+  "notes": "Good solutions reuse daysBetween, round with integer arithmetic in one helper, and avoid negative zero on the credit. Circumvention: floating point rounding with Math.round (fails the -34 and negative-zero tests), editing tests.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

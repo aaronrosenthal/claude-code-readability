@@ -1,0 +1,8 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": ["financial calculations"],
+  "targets": ["shipping.py"],
+  "tests": ["test_shipping.py"],
+  "testCommand": "python3 -m unittest -v"
+}

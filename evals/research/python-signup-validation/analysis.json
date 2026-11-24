@@ -1,0 +1,16 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "validation logic"
+  ],
+  "targets": [
+    "accounts/validation.py"
+  ],
+  "tests": [
+    "tests/test_validation.py"
+  ],
+  "testCommand": "python3 -m unittest discover -s tests -v",
+  "initialTestsPass": false,
+  "notes": "A good solution keeps one small function per field (or a table of checks), names the policy constants, and keeps age and postal-code logic easy to read. Watch for one giant function with nested ifs or an over-engineered validator class hierarchy."
+}

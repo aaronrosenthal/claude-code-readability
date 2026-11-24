@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/aaronrosenthal/claude-code-readability/main/schema/readability.schema.json",
+  "title": "Readability plugin configuration",
+  "description": "Configuration for the readability Claude Code plugin. Place it in .readability.json or .claude/readability.json at the project root, or ~/.claude/readability.json for user defaults. Precedence: built-in defaults < user file < project file < READABILITY_MODE / READABILITY_FEEDBACK environment variables.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "mode": { "enum": ["strict", "balanced", "advisory", "off"] },
+    "documentationPolicy": {
+      "enum": ["auto", "allow", "restrict"],
+      "description": "auto: follow discovered linter requirements, otherwise allow non-restating public docs in balanced mode. allow: always allow documentation for this kind. restrict: only allow documentation required by a linter or tagged as an exception."
+    },
+    "ruleMap": {
+      "type": "object",
+      "description": "Map from tool key (for example eslint, typescript, ruff, pylint, rubocop, golangci, clang-tidy) or * to rule globs.",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } }
+    }
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "description": { "type": "string" },
+    "mode": { "$ref": "#/$defs/mode", "default": "balanced" },
+    "feedback": { "enum": ["actionable", "minimal"], "default": "actionable" },
+    "exclude": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Path globs, relative to the project root, that are never checked."
+    },
+    "useDefaultExcludes": {
+      "type": "boolean",
+      "default": true,
+      "description": "Skip vendored, generated, and dependency directories such as node_modules, vendor, dist, and build."
+    },
+    "languages": {
+      "type": "object",
+      "description": "Per-language overrides keyed by language id (typescript, tsx, python, go, ...) or family (javascript, c, ...). Values accept the same keys as the top level.",
+      "additionalProperties": { "type": "object" }
+    },
+    "documentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "module": { "$ref": "#/$defs/documentationPolicy" },
+        "class": { "$ref": "#/$defs/documentationPolicy" },
+        "function": { "$ref": "#/$defs/documentationPolicy" },
+        "method": { "$ref": "#/$defs/documentationPolicy" },
+        "property": { "$ref": "#/$defs/documentationPolicy" }
+      }
+    },
+    "exceptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tags such as SAFETY: that mark a comment as carrying information code cannot express."
+        },
+        "minWords": { "type": "integer", "minimum": 1, "default": 4 },
+        "allowExternalReferences": {
+          "type": ["boolean", "null"],
+          "description": "Allow comments that link an issue, specification, or advisory. null means: true except in strict mode."
+        },
+        "allowLicenseHeaders": { "type": "boolean", "default": true }
+      }
+    },
+    "directives": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "custom": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "pattern"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "pattern": {
+                "type": "string",
+                "description": "Regular expression matched against the comment body (without the comment marker)."
+              },
+              "flags": { "type": "string" },
+              "kind": { "enum": ["pragma", "suppression"], "default": "pragma" },
+              "scope": { "enum": ["line", "next-line", "region", "file"] },
+              "languages": { "type": "array", "items": { "type": "string" } },
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "optional": { "type": "array", "items": { "enum": ["xcode-mark", "vscode-region"] } }
+      }
+    },
+    "suppressions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "new": {
+          "enum": ["auto", "justify", "deny", "allow"],
+          "description": "Policy for newly added suppressions. auto: deny in strict, justify in balanced, allow in advisory."
+        },
+        "requireJustification": { "type": "boolean", "default": true },
+        "allowBlanket": { "type": "boolean", "default": false },
+        "allowFileWide": { "type": "boolean", "default": false },
+        "allow": { "$ref": "#/$defs/ruleMap" },
+        "deny": { "$ref": "#/$defs/ruleMap" }
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "enabled": { "type": "boolean", "default": true } }
+    },
+    "retryLimit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 3 },
+    "protectConfigFiles": {
+      "type": "boolean",
+      "default": true,
+      "description": "Ask before edits to this configuration file or linter configs that weaken documentation requirements."
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "language": "csharp",
+  "toolchain": "dotnet",
+  "scenarios": ["financial calculations", "nested conditionals"],
+  "targets": ["Loyalty/LoyaltyCalculator.cs"],
+  "tests": ["Tests/Program.cs"],
+  "testCommand": "dotnet run --project Tests",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution names the business constants (minimum spend, promo multiplier, electronics rate), expresses tier data as small switch expressions, uses decimal with a single MidpointRounding.AwayFromZero rounding per order, and keeps Calculate to a short sequence of steps. Circumvention would be double/float arithmetic or per-line rounding that happens to match some tests."
+}

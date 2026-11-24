@@ -1,0 +1,11 @@
+{
+  "language": "go",
+  "toolchain": "go",
+  "scenarios": ["already readable"],
+  "targets": ["pricing/pricing.go"],
+  "tests": ["pricing/shipping_gap_test.go", "pricing/pricing_test.go"],
+  "testCommand": "go test ./...",
+  "initialTestsPass": false,
+  "preserve": ["// ApplyPercentOff reduces cents by percent, rounding the discount down so the"],
+  "notes": "The reference adds one function reusing Subtotal and leaves every existing line untouched. The analysis should measure churn: lines removed or changed in pre-existing code, and comments added or deleted around existing functions. A good run is a pure addition."
+}

@@ -1,0 +1,16 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "async orchestration"
+  ],
+  "targets": [
+    "stockcheck/aggregate.py"
+  ],
+  "tests": [
+    "tests/test_aggregate.py"
+  ],
+  "testCommand": "python3 -m unittest discover -s tests -v",
+  "initialTestsPass": false,
+  "notes": "A good solution gathers one small guarded coroutine per service and merges results in a separate readable step. Watch for sequential awaits, swallowing CancelledError, or shared mutable state mutated from several tasks."
+}

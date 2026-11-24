@@ -1,0 +1,20 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "existing suppressions"
+  ],
+  "targets": [
+    "src/webhook-handler.ts"
+  ],
+  "tests": [
+    "test/webhook-handler.test.ts"
+  ],
+  "preserve": [
+    "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- webhook payloads are untyped JSON from the provider",
+    "// @ts-expect-error -- the SDK's types omit the 'priority' field (fixed in v5)"
+  ],
+  "notes": "Existing directives must survive verbatim. The new case also needs the untyped priority field, so a good solution repeats the same documented @ts-expect-error rather than a bare @ts-ignore.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

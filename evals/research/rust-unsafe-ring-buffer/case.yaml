@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: rust-unsafe-ring-buffer
+context:
+  scaffold_script: scaffold.sh

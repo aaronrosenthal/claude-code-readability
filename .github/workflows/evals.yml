@@ -1,0 +1,92 @@
+name: Evals (manual, paid)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Case tag to run (smoke or research)
+        default: smoke
+      arms:
+        description: Arms to run (A = no plugin, B = skill only, C = hook minimal, D = full)
+        default: A,B,C,D
+      runs:
+        description: Runs per case per arm
+        default: "2"
+      budget:
+        description: Total list-price ceiling in USD across all arms
+        default: "10"
+      model:
+        description: Model under test
+        default: claude-sonnet-5-5
+      judge:
+        description: Run the blinded pairwise judge (extra cost, at most 25% of the budget)
+        type: boolean
+        default: false
+      min_correctness_delta:
+        description: Fail if arm D correctness is lower than arm A by more than this many percentage points
+        default: "10"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals
+  cancel-in-progress: false
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - run: gem install minitest --no-document
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Install Claude Code and the sandbox prerequisites
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          sudo apt-get update && sudo apt-get install -y bubblewrap socat
+      - name: Run arms
+        run: |
+          budget='${{ inputs.budget }}'
+          arm_budget=$(node -e "console.log(${{ inputs.judge }} ? $budget * 0.75 : $budget)")
+          node evals/tools/run-arms.mjs --tag '${{ inputs.tag }}' --arms '${{ inputs.arms }}' --runs '${{ inputs.runs }}' \
+            --model '${{ inputs.model }}' --budget "$arm_budget" --out evals/results/ci
+      - name: Analyze
+        run: node evals/tools/analyze.mjs evals/results/ci
+      - name: Blinded pairwise judge
+        if: ${{ inputs.judge }}
+        run: |
+          node evals/tools/blind-judge.mjs evals/results/ci --pairs A:D,B:D,C:D --audit-comments --budget "$(node -e "console.log(${{ inputs.budget }} * 0.25)")"
+          node evals/tools/analyze.mjs evals/results/ci
+      - name: Regression gate (correctness must not drop)
+        run: node evals/tools/gate.mjs evals/results/ci --max-correctness-drop '${{ inputs.min_correctness_delta }}'
+      - name: Upload report (metrics and summaries; raw transcripts excluded)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: |
+            evals/results/ci/manifest.json
+            evals/results/ci/analysis/
+            evals/results/ci/raw/*.json

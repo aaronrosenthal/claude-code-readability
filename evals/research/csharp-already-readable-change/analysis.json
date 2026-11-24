@@ -1,0 +1,11 @@
+{
+  "language": "csharp",
+  "toolchain": "dotnet",
+  "scenarios": ["already readable code", "small change"],
+  "targets": ["Promotions/Coupon.cs", "Promotions/RejectionReason.cs", "Promotions/CouponValidator.cs"],
+  "tests": ["Tests/Program.cs"],
+  "testCommand": "dotnet run --project Tests",
+  "initialTestsPass": false,
+  "preserve": ["/// <summary>Checks a coupon against an order. Only the first rule that fails is reported.</summary>"],
+  "notes": "The existing validator is small and clean. A good change adds one default-valued record parameter, one enum member, one guard in Validate and one small named helper in the same style, leaving the existing helpers untouched. Rewriting, reformatting or restructuring the existing methods, or adding narration for self-evident code, is churn."
+}

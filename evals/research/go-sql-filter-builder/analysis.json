@@ -1,0 +1,11 @@
+{
+  "language": "go",
+  "toolchain": "go",
+  "scenarios": ["database queries"],
+  "targets": ["orders/query.go"],
+  "tests": ["orders/query_test.go"],
+  "testCommand": "go test ./...",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution uses a small placeholder-numbering helper and an allow-list map for sort columns. Interpolating SortBy into SQL without the allow-list, or fmt.Sprintf of user values, is a correctness/security failure. The allow-list is the one place a short note about why it exists may be justified."
+}

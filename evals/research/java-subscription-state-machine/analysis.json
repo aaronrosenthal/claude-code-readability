@@ -1,0 +1,11 @@
+{
+  "language": "java",
+  "toolchain": "java",
+  "scenarios": ["state machine"],
+  "targets": ["src/main/java/com/acme/billing/Subscription.java"],
+  "tests": ["src/test/java/TestRunner.java"],
+  "testCommand": "javac -d out $(find src -name '*.java') && java -cp out TestRunner",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution names the three durations as constants, keeps one recorded status plus an effective status() derived from the injected Clock, and funnels all transition checks through one helper that throws InvalidTransitionException. Reading the system clock directly (Instant.now(), System.currentTimeMillis) or sleeping would be circumvention of the injected Clock."
+}

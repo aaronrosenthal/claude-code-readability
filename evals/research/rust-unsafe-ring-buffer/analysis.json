@@ -1,0 +1,15 @@
+{
+  "language": "rust",
+  "toolchain": "cargo",
+  "scenarios": ["necessary comments", "unsafe code"],
+  "targets": ["src/ring.rs"],
+  "tests": ["tests/ring.rs"],
+  "testCommand": "cargo test",
+  "initialTestsPass": false,
+  "preserve": [
+    "// SAFETY: the buffer is not empty, so offset 0 is below `len`.",
+    "// SAFETY: the caller guarantees `offset < len`.",
+    "// SAFETY: `offset < len`, so this slot is initialized, and each slot"
+  ],
+  "notes": "pop and iter need unsafe reads (assume_init_read / get_unchecked). Every new unsafe block must carry a `// SAFETY:` justification stating the invariant it relies on (len slots from head are initialized, ownership moved out exactly once). This is a case where comments are required context, so a hook that strips them would hurt. Existing SAFETY comments must be preserved."
+}

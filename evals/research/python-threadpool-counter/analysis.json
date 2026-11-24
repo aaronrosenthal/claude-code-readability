@@ -1,0 +1,16 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "concurrency"
+  ],
+  "targets": [
+    "ratelimit/window.py"
+  ],
+  "tests": [
+    "tests/test_window.py"
+  ],
+  "testCommand": "python3 -m unittest discover -s tests -v",
+  "initialTestsPass": false,
+  "notes": "A good solution guards all shared state with one lock held for the whole check-then-act sequence, keeps expiry in one helper, and avoids lock-free cleverness. Removing or narrowing the lock makes the threaded tests fail."
+}

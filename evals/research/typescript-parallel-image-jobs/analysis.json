@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "async orchestration"
+  ],
+  "targets": [
+    "src/batch.ts"
+  ],
+  "tests": [
+    "test/batch.test.ts"
+  ],
+  "notes": "Idiomatic solution: N worker loops draining a shared index. Over-engineering would be a Semaphore/Queue class or manual promise bookkeeping.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

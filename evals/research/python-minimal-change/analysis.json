@@ -1,0 +1,17 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "minimal change",
+    "unnecessary abstraction"
+  ],
+  "targets": [
+    "deploylog/cli.py"
+  ],
+  "tests": [
+    "tests/test_cli.py"
+  ],
+  "testCommand": "python3 -m unittest discover -s tests -v",
+  "initialTestsPass": false,
+  "notes": "A good solution is a small diff: one new parameter on filter_entries, one date-parsing helper or type function, and one argparse option. Introducing new classes (filter objects, option dataclasses) or restructuring the module counts against the change."
+}

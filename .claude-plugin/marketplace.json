@@ -1,0 +1,14 @@
+{
+  "name": "readability-plugins",
+  "description": "Marketplace for the readability plugin: make the code explain itself.",
+  "owner": { "name": "Aaron Rosenthal", "url": "https://github.com/aaronrosenthal" },
+  "plugins": [
+    {
+      "name": "readability",
+      "source": "./",
+      "description": "A readability skill plus a deterministic hook that blocks newly introduced unnecessary comments and unauthorized suppressions.",
+      "category": "code-quality",
+      "tags": ["readability", "comments", "hooks"]
+    }
+  ]
+}

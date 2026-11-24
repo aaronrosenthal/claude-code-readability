@@ -1,0 +1,11 @@
+{
+  "language": "go",
+  "toolchain": "go",
+  "scenarios": ["concurrency"],
+  "targets": ["cache/cache.go"],
+  "tests": ["cache/cache_test.go"],
+  "testCommand": "go test ./...",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution holds the mutex only for map access, tracks in-flight loads per key, and never calls the loader under the lock. Synchronization reasoning is where an explanatory comment may be legitimately useful; narration of each lock call is not."
+}

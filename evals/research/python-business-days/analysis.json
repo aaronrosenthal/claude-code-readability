@@ -1,0 +1,16 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "date and time handling"
+  ],
+  "targets": [
+    "sla/due_dates.py"
+  ],
+  "tests": [
+    "tests/test_due_dates.py"
+  ],
+  "testCommand": "python3 -m unittest discover -s tests -v",
+  "initialTestsPass": false,
+  "notes": "A good solution is a short day-by-day loop with small helpers for finding the first working moment and the next opening. Watch for minute-by-minute stepping, UTC arithmetic that breaks wall-clock hours, or naive datetimes."
+}

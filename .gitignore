@@ -1,0 +1,11 @@
+node_modules/
+evals/results/
+.eval-variants/
+evals/analysis/output/
+benchmarks/output/
+*.log
+.DS_Store
+.env
+.env.*
+.claude/settings.local.json
+coverage/

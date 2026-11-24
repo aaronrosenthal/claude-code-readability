@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "browser compatibility workaround"
+  ],
+  "targets": [
+    "src/legacy-timestamps.ts"
+  ],
+  "tests": [
+    "test/legacy-timestamps.test.ts"
+  ],
+  "notes": "The normalisation looks arbitrary without context; the reason (iOS Safari 15 / WebKit cannot parse the space form) must be recorded in code. The records-compat-reason grader checks for a mention of Safari, WebKit or iOS. Over-engineering: date library emulation, user-agent sniffing.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

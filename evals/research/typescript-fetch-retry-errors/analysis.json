@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "error handling"
+  ],
+  "targets": [
+    "src/http-client.ts"
+  ],
+  "tests": [
+    "test/http-client.test.ts"
+  ],
+  "notes": "Good solutions separate one attempt from the retry loop, keep the retry/no-retry decision in one place, and return a discriminated union without throwing. Over-engineering would be a RetryPolicy class or generic middleware.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

@@ -1,0 +1,38 @@
+{
+  "description": "Readability: reject newly introduced unnecessary comments and unauthorized linter suppressions before a file is written.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/readability-hook.mjs"],
+            "timeout": 15,
+            "statusMessage": "Checking new comments"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(cat *)",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/readability-hook.mjs"],
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "if": "Bash(tee *)",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/readability-hook.mjs"],
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

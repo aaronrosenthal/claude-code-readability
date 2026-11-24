@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: python-shipping-cost
+context:
+  scaffold_script: scaffold.sh

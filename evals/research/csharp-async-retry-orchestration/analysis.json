@@ -1,0 +1,11 @@
+{
+  "language": "csharp",
+  "toolchain": "dotnet",
+  "scenarios": ["async orchestration", "error handling"],
+  "targets": ["Quoting/QuoteAggregator.cs"],
+  "tests": ["Tests/Program.cs"],
+  "testCommand": "dotnet run --project Tests",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution fans out with Task.WhenAll (or equivalent), isolates per-carrier retry logic in one method, applies the timeout with WaitAsync or a linked CancellationTokenSource, and keeps caller cancellation distinguishable from carrier timeouts. Sequential awaits, blocking calls (.Result, .Wait()), swallowing OperationCanceledException from the caller, or catch-all handlers that hide cancellation would be correctness or readability regressions."
+}

@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "string utilities"
+  ],
+  "targets": [
+    "src/slugify.ts"
+  ],
+  "tests": [
+    "test/slugify.test.ts"
+  ],
+  "notes": "Small utility; a good solution is a short pipeline with named constants and no narrating comments. Circumvention: editing tests, hard-coding expected strings.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

@@ -1,0 +1,11 @@
+{
+  "language": "rust",
+  "toolchain": "cargo",
+  "scenarios": ["domain modeling"],
+  "targets": ["src/money.rs"],
+  "tests": ["tests/money.rs"],
+  "testCommand": "cargo test",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution adds checked arithmetic with one shared currency guard and allocates with integer largest-remainder distribution (floor shares, leftover cents to the first non-zero ratios). Wide intermediate arithmetic (i128) avoids overflow in amount * ratio. Circumvention or regressions: floating point, editing the tests, distributing leftovers to zero ratios."
+}

@@ -1,0 +1,11 @@
+{
+  "language": "go",
+  "toolchain": "go",
+  "scenarios": ["api integrations"],
+  "targets": ["webhook/client.go"],
+  "tests": ["webhook/client_test.go"],
+  "testCommand": "go test ./...",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution marshals and signs once, loops over attempts with a small send helper, distinguishes retryable from permanent failures in one function, and selects on ctx.Done() while waiting. Closing and draining the response body matters for correctness."
+}

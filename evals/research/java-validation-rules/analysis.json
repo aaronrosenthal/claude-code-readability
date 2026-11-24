@@ -1,0 +1,11 @@
+{
+  "language": "java",
+  "toolchain": "java",
+  "scenarios": ["validation logic"],
+  "targets": ["src/main/java/com/acme/shipping/AddressValidator.java"],
+  "tests": ["src/test/java/TestRunner.java"],
+  "testCommand": "javac -d out $(find src -name '*.java') && java -cp out TestRunner",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution keeps per-country data (patterns, region-required set) in named constants and keeps validate() a flat sequence of field checks in field order, with small helpers for blank handling. Over-engineering (a rule interface per field, a validator registry) or deeply nested conditionals would be a readability regression. The PO box pattern is the only subtle regex; resembling street names are a trap."
+}

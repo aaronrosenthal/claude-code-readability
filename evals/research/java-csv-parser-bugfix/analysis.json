@@ -1,0 +1,11 @@
+{
+  "language": "java",
+  "toolchain": "java",
+  "scenarios": ["bug fix in unfamiliar code"],
+  "targets": ["src/main/java/com/acme/csv/CsvReader.java"],
+  "tests": ["src/test/java/TestRunner.java"],
+  "testCommand": "javac -d out $(find src -name '*.java') && java -cp out TestRunner",
+  "initialTestsPass": false,
+  "preserve": ["// Blank lines are skipped; the exports pad the end of the file with them."],
+  "notes": "A good fix replaces the line-based parser with a character-level state machine that treats a doubled quote as a literal quote and keeps line breaks inside quoted fields, while still counting physical lines for error reporting. The pre-existing comment about blank lines explains why they are dropped and should survive."
+}

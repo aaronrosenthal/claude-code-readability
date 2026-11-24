@@ -1,0 +1,17 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "notebook editing",
+    "data cleaning"
+  ],
+  "targets": [
+    "orders_cleaning.ipynb"
+  ],
+  "tests": [
+    "check_notebook.py"
+  ],
+  "testCommand": "python3 check_notebook.py",
+  "initialTestsPass": false,
+  "notes": "Two bugs in the cleaning cell: amounts with thousands separators crash Decimal parsing, and duplicate orders keep the last row instead of the most recent `updated`. A good fix is small and stays in the cell. Notebook edits go through NotebookEdit, which the comment hook must also handle."
+}

@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "linter suppression"
+  ],
+  "targets": [
+    "src/export.ts"
+  ],
+  "tests": [
+    "test/export.test.ts"
+  ],
+  "notes": "Awaiting in a loop is the correct design; a rule-specific eslint-disable with a reason is the expected outcome. Failure modes: blanket disable, editing eslint.config.js, contorting the code to dodge the rule, or silently dropping the reason. ESLint is not installed so only structure is graded.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

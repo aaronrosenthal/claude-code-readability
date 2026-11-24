@@ -1,0 +1,18 @@
+{
+  "language": "ruby",
+  "toolchain": "ruby",
+  "scenarios": ["bug fix in unfamiliar code", "necessary comments"],
+  "targets": ["lib/billing/renewal_calculator.rb"],
+  "tests": ["test/billing/renewal_calculator_test.rb"],
+  "testCommand": "ruby -Ilib -Itest -e 'Dir[\"test/**/*_test.rb\"].each { |f| require File.expand_path(f) }'",
+  "initialTestsPass": false,
+  "preserve": [
+    "# Paystream mandates cannot be charged more often than monthly, so there is",
+    "# deliberately no weekly interval here. Do not add one without checking with",
+    "# payments first.",
+    "# HISTORY: Paystream submits charges at 02:00 UTC on the renewal date and",
+    "# rejects any charge dated in the past (INC-2231), so a renewal that falls",
+    "# on today counts as already taken and the following one is returned."
+  ],
+  "notes": "The bug: each renewal is computed from the previous renewal, so a clamped day (Jan 31 -> Feb 29) drifts forever. The fix computes every renewal from the original start date. The Paystream weekly-interval note and the HISTORY note about charge dates carry constraints the code cannot express and must survive verbatim. The narration comments (supported intervals, start from the signup date, move forward) are outdated or restate the code and may go."
+}

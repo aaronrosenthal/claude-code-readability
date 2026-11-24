@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "date and time"
+  ],
+  "targets": [
+    "src/local-days.ts"
+  ],
+  "tests": [
+    "test/local-days.test.ts"
+  ],
+  "notes": "The offset-correction trick for local midnight is non-obvious; good solutions name it clearly and may explain it briefly. Circumvention: hard-coding fixed offsets for the tested zones.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

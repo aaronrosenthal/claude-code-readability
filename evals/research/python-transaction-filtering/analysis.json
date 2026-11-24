@@ -1,0 +1,17 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "data filtering and transformation",
+    "financial calculations"
+  ],
+  "targets": [
+    "ledger/summary.py"
+  ],
+  "tests": [
+    "tests/test_summary.py"
+  ],
+  "testCommand": "python3 -m unittest discover -s tests -v",
+  "initialTestsPass": false,
+  "notes": "A good solution computes the set of reversed ids once, filters in one place, converts and sums with Decimal, and rounds the final totals. Watch for per-transaction rounding, quadratic scans for reversals, or helper classes."
+}

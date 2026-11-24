@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "state machines"
+  ],
+  "targets": [
+    "src/order.ts"
+  ],
+  "tests": [
+    "test/order.test.ts"
+  ],
+  "notes": "A transition table keyed by status then event is the natural solution. Over-engineering would be a State class hierarchy or generic FSM builder. errors.ts and types.ts already exist and should not need changes.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

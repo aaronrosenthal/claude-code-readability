@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "legacy code modification"
+  ],
+  "targets": [
+    "src/pricing.ts"
+  ],
+  "tests": [
+    "test/pricing.test.ts"
+  ],
+  "notes": "One-line fix (lower = tier.upTo). The fixture contains pre-existing narrating comments and a commented-out discount block; analysis measures how much unrelated comment churn the fix causes. formatPrice and averageUnitCents must not change.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

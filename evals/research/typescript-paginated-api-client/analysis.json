@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "toolchain": "node",
+  "scenarios": [
+    "API integrations"
+  ],
+  "targets": [
+    "src/tickets-client.ts"
+  ],
+  "tests": [
+    "test/tickets-client.test.ts"
+  ],
+  "notes": "Good solutions share one request helper with rate-limit retry, keep listAll as a small do/while generator, and name constants. Over-engineering: paginator framework, retry strategy classes.",
+  "testCommand": "node --test",
+  "initialTestsPass": false
+}

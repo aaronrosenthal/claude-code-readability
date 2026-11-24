@@ -1,0 +1,31 @@
+{
+  "name": "claude-code-readability",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code plugin that makes the code explain itself: a readability skill plus a deterministic hook that rejects unnecessary new comments.",
+  "license": "MIT",
+  "author": "Aaron Rosenthal (https://github.com/aaronrosenthal)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaronrosenthal/claude-code-readability.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/unit/ tests/integration/",
+    "test:unit": "node --test tests/unit/",
+    "test:integration": "node --test tests/integration/",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "bench": "node benchmarks/run.mjs",
+    "bench:check": "node benchmarks/run.mjs --check",
+    "validate": "claude plugin validate .",
+    "evals:variants": "node evals/tools/build-variants.mjs",
+    "evals:smoke": "node evals/tools/run-arms.mjs --tag smoke"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8"
+  }
+}

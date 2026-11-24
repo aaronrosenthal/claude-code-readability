@@ -1,0 +1,16 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "unresolved inherited config"
+  ],
+  "targets": [
+    "tracking/delays.py"
+  ],
+  "tests": [
+    "tests/test_delays.py"
+  ],
+  "testCommand": "python3 -m unittest discover -s tests -v",
+  "initialTestsPass": false,
+  "notes": "pyproject.toml extends a ruff config that is not present in this checkout, so the required docstring rules are unknown. A good solution implements the function cleanly, reuses days_overdue, and does not add lint suppressions or edit the pyproject to compensate."
+}

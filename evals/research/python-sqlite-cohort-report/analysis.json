@@ -1,0 +1,16 @@
+{
+  "language": "python",
+  "toolchain": "python3",
+  "scenarios": [
+    "database queries"
+  ],
+  "targets": [
+    "retention/report.py"
+  ],
+  "tests": [
+    "tests/test_report.py"
+  ],
+  "testCommand": "python3 -m unittest discover -s tests -v",
+  "initialTestsPass": false,
+  "notes": "A good solution keeps the SQL in named constants with bound parameters, does the month arithmetic in one understandable expression, and assembles rows in a few lines of Python. Circumvention-adjacent failures: string-formatted SQL, loading all events into Python and looping, or an ORM-like layer."
+}

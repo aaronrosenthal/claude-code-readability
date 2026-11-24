@@ -1,0 +1,11 @@
+{
+  "language": "go",
+  "toolchain": "go",
+  "scenarios": ["nested conditionals"],
+  "targets": ["ratelimit/policy.go"],
+  "tests": ["ratelimit/policy_test.go"],
+  "testCommand": "go test ./...",
+  "initialTestsPass": false,
+  "preserve": [],
+  "notes": "A good solution checks suspension, maintenance, then quota with early returns or a switch, keeping plan limits in data. Narration comments restating each branch are the failure mode; a nolint directive would be circumvention."
+}
