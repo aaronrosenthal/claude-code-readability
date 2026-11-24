@@ -45,11 +45,11 @@ test('invalid configuration is reported and ignored rather than crashing', () =>
   const env = { READABILITY_USER_CONFIG: '/nonexistent' };
   const broken = temporaryProject({ '.readability.json': '{ not json' });
   const brokenResult = loadConfig({ projectRoot: broken, env });
-  assert.equal(brokenResult.config.mode, 'balanced');
+  assert.equal(brokenResult.config.mode, 'advisory');
   assert.equal(brokenResult.warnings.length, 1);
   const wrongTypes = temporaryProject({ '.readability.json': JSON.stringify({ mode: 'loud', retryLimit: -1, typo: true, documentation: { klass: 'allow' } }) });
   const result = loadConfig({ projectRoot: wrongTypes, env });
-  assert.equal(result.config.mode, 'balanced');
+  assert.equal(result.config.mode, 'advisory');
   assert.equal(result.config.retryLimit, 3);
   assert.equal(result.warnings.length, 4);
   const array = temporaryProject({ '.readability.json': '[]' });
@@ -58,23 +58,24 @@ test('invalid configuration is reported and ignored rather than crashing', () =>
 
 test('invalid environment overrides are ignored', () => {
   const root = temporaryProject();
-  assert.equal(loadConfig({ projectRoot: root, env: { READABILITY_USER_CONFIG: '/nonexistent', READABILITY_MODE: 'yolo' } }).config.mode, 'balanced');
+  assert.equal(loadConfig({ projectRoot: root, env: { READABILITY_USER_CONFIG: '/nonexistent', READABILITY_MODE: 'yolo' } }).config.mode, 'advisory');
 });
 
 test('mode-dependent defaults resolve per mode', () => {
   const strict = effectiveConfigFor({ ...defaultConfig(), mode: 'strict' }, 'python', 'python');
   assert.equal(strict.suppressions.new, 'deny');
   assert.equal(strict.exceptions.allowExternalReferences, false);
-  const balanced = effectiveConfigFor(defaultConfig(), 'python', 'python');
+  const balanced = effectiveConfigFor({ ...defaultConfig(), mode: 'balanced' }, 'python', 'python');
   assert.equal(balanced.suppressions.new, 'justify');
   assert.equal(balanced.exceptions.allowExternalReferences, true);
-  assert.equal(effectiveConfigFor({ ...defaultConfig(), mode: 'advisory' }, 'python', 'python').suppressions.new, 'allow');
+  assert.equal(effectiveConfigFor({ ...defaultConfig(), mode: 'advisory' }, 'python', 'python').suppressions.new, 'justify');
+  assert.equal(defaultConfig().mode, 'advisory');
 });
 
 test('language overrides apply by language id or family', () => {
   const config = { ...defaultConfig(), languages: { tsx: { mode: 'advisory' }, python: { mode: 'strict' } } };
   assert.equal(effectiveConfigFor(config, 'tsx', 'javascript').mode, 'advisory');
-  assert.equal(effectiveConfigFor(config, 'typescript', 'javascript').mode, 'balanced');
+  assert.equal(effectiveConfigFor(config, 'typescript', 'javascript').mode, 'advisory');
   assert.equal(effectiveConfigFor(config, 'python', 'python').mode, 'strict');
   assert.equal(effectiveConfigFor(config, 'python', 'python').suppressions.new, 'deny');
 });

@@ -635,7 +635,7 @@ function classifyDocumentation(unit, target, context) {
       reason: { code: 'documentation-restricted', text: `documentation.${target.kind} is "restrict" in this project's readability config` },
     };
   }
-  if (config.mode === 'balanced' && (isExposed(target.visibility) || target.kind === 'module') && !restates) {
+  if (config.mode !== 'strict' && (isExposed(target.visibility) || target.kind === 'module') && !restates) {
     return { allowed: true, category: 'documentation', detail: `public API documentation for ${target.kind}` };
   }
   if (restates) {
@@ -721,7 +721,6 @@ function stripComments(source, lexed) {
 }
 
 function documentationConstructFindings(family, before, after, lexedBefore, lexedAfter, config) {
-  if (config.mode === 'advisory') return [];
   const beforeConstructs = documentationSuppressionConstructs(family, stripComments(before, lexedBefore));
   const afterConstructs = documentationSuppressionConstructs(family, stripComments(after, lexedAfter));
   const remaining = new Map();

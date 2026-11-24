@@ -5,9 +5,12 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { editPayload, runHook, temporaryProject, writePayload } from '../helpers.mjs';
 
-function isolatedEnv(root, extra = {}) {
+// Most tests exercise enforcement, so the isolated user config selects balanced mode. Project configs still override it.
+function isolatedEnv(root, extra = {}, { userConfig = { mode: 'balanced' } } = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'readability data '));
-  return { CLAUDE_PROJECT_DIR: root, CLAUDE_PLUGIN_DATA: data, READABILITY_USER_CONFIG: path.join(data, 'none.json'), ...extra };
+  const userConfigPath = path.join(data, 'user.json');
+  if (userConfig) fs.writeFileSync(userConfigPath, JSON.stringify(userConfig));
+  return { CLAUDE_PROJECT_DIR: root, CLAUDE_PLUGIN_DATA: data, READABILITY_USER_CONFIG: userConfigPath, ...extra };
 }
 
 const NARRATION = 'export function total(items: number[]): number {\n  // loop over the numbers and add them up\n  return items.reduce((sum, value) => sum + value, 0);\n}\n';
@@ -157,6 +160,23 @@ test('advisory mode adds context instead of blocking', async () => {
   const result = await runHook(writePayload(path.join(root, 'total.ts'), NARRATION, { cwd: root }), { env: isolatedEnv(root) });
   assert.equal(result.decision, null);
   assert.match(result.output.hookSpecificOutput.additionalContext, /total\.ts:2/);
+});
+
+test('the default mode warns about comments instead of blocking', async () => {
+  const root = temporaryProject();
+  const result = await runHook(writePayload(path.join(root, 'total.ts'), NARRATION, { cwd: root }), { env: isolatedEnv(root, {}, { userConfig: null }) });
+  assert.equal(result.decision, null);
+  assert.match(result.output.hookSpecificOutput.additionalContext, /readability \(advisory\)/);
+  assert.match(result.output.hookSpecificOutput.additionalContext, /Keep any comment that records a reason/);
+});
+
+test('the default mode still asks before readability config edits and weakened documentation rules', async () => {
+  const root = temporaryProject({ '.rubocop.yml': 'AllCops:\n  NewCops: enable\n' });
+  const env = isolatedEnv(root, {}, { userConfig: null });
+  const configEdit = await runHook(writePayload(path.join(root, '.readability.json'), '{"mode":"off"}', { cwd: root }), { env });
+  assert.equal(configEdit.decision, 'ask');
+  const weakened = await runHook(writePayload(path.join(root, '.rubocop.yml'), 'AllCops:\n  NewCops: enable\nStyle/Documentation:\n  Enabled: false\n', { cwd: root }), { env });
+  assert.equal(weakened.decision, 'ask');
 });
 
 test('repeated identical rejections are released to avoid a loop', async () => {

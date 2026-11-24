@@ -82,10 +82,10 @@ export function evaluate(payload, env = process.env) {
   for (const operation of operations) {
     const realPath = path.resolve(operation.filePath.replace(/#[^/\\]*$/, ''));
     const relativePath = toRelative(projectRoot, realPath);
-    if (enforcing && config.protectConfigFiles && isReadabilityConfig(realPath, projectRoot, env)) {
+    if (config.protectConfigFiles && isReadabilityConfig(realPath, projectRoot, env)) {
       return { output: decision('ask', configProtectionMessage(relativePath)), trace: 'readability config protection' };
     }
-    if (enforcing && config.discovery.enabled !== false) {
+    if (config.discovery.enabled !== false) {
       const weakened = linterConfigWeakening(operation, projectRoot, relativePath);
       if (weakened.length > 0) return { output: decision('ask', weakenedDocumentationMessage(relativePath, weakened)), trace: 'documentation requirement weakened' };
     }

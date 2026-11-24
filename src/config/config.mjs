@@ -34,7 +34,7 @@ export const DEFAULT_EXCEPTION_TAGS = ['SAFETY', 'SECURITY', 'INVARIANT', 'CONCU
 
 export function defaultConfig() {
   return {
-    mode: 'balanced',
+    mode: 'advisory',
     feedback: 'actionable',
     exclude: [],
     useDefaultExcludes: true,
@@ -160,7 +160,7 @@ export function effectiveConfigFor(config, languageId, family) {
   const strict = merged.mode === 'strict';
   if (merged.exceptions.allowExternalReferences === null) merged.exceptions.allowExternalReferences = !strict;
   if (merged.suppressions.new === 'auto') {
-    merged.suppressions.new = strict ? 'deny' : merged.mode === 'balanced' ? 'justify' : 'allow';
+    merged.suppressions.new = strict ? 'deny' : 'justify';
   }
   return merged;
 }

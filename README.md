@@ -63,14 +63,15 @@ Claude proposes Write / Edit / NotebookEdit ──► PreToolUse hook (local, de
            mechanically necessary  directive, pragma, type annotation, license, shebang  → allow
            semantically necessary  exception tag, required docs, external reference      → allow
            unnecessary             narration, restating code, explaining a bad name,
-                                   commented-out code, TODO, unjustified suppression       → deny
+                                   commented-out code, TODO, unjustified suppression       → flag
                                                   │
-         deny with file:line, the comment, the reason, and what to do instead ──► Claude revises the code
+         advisory (default): note with file:line and reason ──► Claude decides
+         balanced / strict:  deny with file:line, reason, and what to do instead ──► Claude revises the code
 ```
 
-- **The skill** (`readable-code`) explains the principles: treat an explanatory comment as a smell, fix names, control
-  flow, and types first, avoid over-abstraction, keep comments that carry real information, and how to respond to a
-  rejection. It is loaded when Claude writes or edits code.
+- **The skill** (`readable-code`) explains the principles: treat a comment that says *what* the code does as a smell,
+  fix names, control flow, and types first, avoid over-abstraction, write comments that say *why* when the code cannot,
+  and how to respond to a rejection. It is loaded when Claude writes or edits code.
 - **The hook** enforces the part that can be checked deterministically. It never rewrites code, makes no network or
   model calls, fails open on anything it cannot parse with confidence, and releases an edit after repeated identical
   rejections so Claude cannot get stuck.
@@ -79,7 +80,7 @@ Claude proposes Write / Edit / NotebookEdit ──► PreToolUse hook (local, de
   Directive recognition follows each tool's documented grammar, and recognized suppressions go through a separate
   policy: name the rule, use the narrowest scope, give a reason in the tool's syntax.
 
-A rejection looks like this:
+In `balanced` or `strict` mode, a rejection looks like this:
 
 ```
 readability: This edit introduces 2 comments that look unnecessary or unauthorized.
@@ -191,11 +192,13 @@ personal defaults; the project file wins):
 | Mode | Behavior |
 | :- | :- |
 | `strict` | rejects any new comment that is not a directive, tagged exception, or required documentation; new suppressions need an allowlist entry |
-| `balanced` (default) | rejects narration and other unnecessary comments; accepts license headers, external references, non-restating public docs, and specific, justified suppressions |
-| `advisory` | never blocks; tells Claude which comments look unnecessary |
+| `balanced` | rejects narration and other unnecessary comments; accepts license headers, external references, non-restating public docs, and specific, justified suppressions |
+| `advisory` (default) | classifies like `balanced`, but only tells Claude which comments and suppressions look unnecessary; still asks you before edits to the readability config or edits that weaken a linter's documentation rules |
 | `off` | disabled |
 
-`READABILITY_MODE=advisory claude` overrides the mode for one session. See [docs/configuration.md](docs/configuration.md)
+The default is `advisory` because in the research eval most of the comments the blocking modes rejected were judged
+necessary (see [Evaluation results](#evaluation-results)). Use `balanced` or `strict` if you want enforcement.
+`READABILITY_MODE=balanced claude` overrides the mode for one session. See [docs/configuration.md](docs/configuration.md)
 for every option and [docs/discovery.md](docs/discovery.md) for how linter documentation requirements are detected.
 
 ## Supported languages and directives
@@ -271,8 +274,8 @@ fixes in unfamiliar code, code that genuinely needs a suppression or a compatibi
 documentation, attempts to circumvent those linters, conflicting and unresolved configurations, and code that is already
 readable and should barely change.
 
-Four arms differ only in the treatment: **A** no plugin (the framework's native baseline), **B** skill only, **C** hook
-with minimal feedback, **D** full plugin. Correctness is a hard gate. Readability is judged pairwise by a blinded model
+Four arms differ only in the treatment: **A** no plugin (the framework's native baseline), **B** skill only, **C** blocking hook
+with minimal feedback, **D** full plugin in its default mode. Correctness is a hard gate. Readability is judged pairwise by a blinded model
 on code with comments normalized away, so fewer comments cannot win by themselves, with randomized and swapped
 presentation order. Methodology, metrics, and limitations: [docs/evaluation.md](docs/evaluation.md).
 

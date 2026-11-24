@@ -30,9 +30,12 @@ otherwise the nearest enclosing git repository, otherwise the file's directory.
 | Mode | New unnecessary comments | New suppressions | External references |
 | :- | :- | :- | :- |
 | `strict` | rejected unless tagged, required by a linter, or allowed by config | rejected unless listed in `suppressions.allow` | rejected unless tagged |
-| `balanced` (default) | rejected | allowed when specific, narrow, and justified | allowed |
-| `advisory` | reported to Claude as context, never blocked | reported | allowed |
+| `balanced` | rejected | allowed when specific, narrow, and justified | allowed |
+| `advisory` (default) | classified as in `balanced`, reported to Claude as context, never blocked | unjustified ones reported | allowed |
 | `off` | not checked | not checked | |
+
+In every mode except `off`, edits to the readability configuration and edits that weaken a discovered linter's
+documentation requirements ask for your confirmation.
 
 ## Example
 
@@ -80,7 +83,7 @@ Overrides keyed by language id (`typescript`, `tsx`, `python`, `go`, ...; see [d
 
 Per declaration kind (`module`, `class`, `function`, `method`, `property`):
 
-- `auto` (default): documentation required by a discovered linter rule is always allowed. Otherwise, in balanced mode,
+- `auto` (default): documentation required by a discovered linter rule is always allowed. Otherwise, in balanced and advisory mode,
   documentation on public declarations is allowed unless it merely restates the declaration (`/** Gets the user name. */`
   on `getUserName`); documentation on private helpers is rejected. Strict mode rejects documentation that nothing requires.
 - `allow`: always allow documentation for this kind.
@@ -108,7 +111,7 @@ TODO, FIXME, HACK, XXX, and NOTE are deliberately **not** exceptions.
 
 Policy for **new** linter suppressions. Existing suppressions are never reported unless an edit broadens them.
 
-- `new`: `auto` (strict → `deny`, balanced → `justify`, advisory → `allow`), `justify`, `deny`, or `allow`.
+- `new`: `auto` (strict → `deny`, otherwise `justify`; in advisory mode findings are only reported), `justify`, `deny`, or `allow`.
 - `requireJustification`: a reason of at least three words, using the tool's own syntax (ESLint `-- reason`, Biome
   `: reason`, golangci-lint `// reason`, ...) or a comment directly above the suppression.
 - `allowBlanket`: allow suppressions that name no rule (`# noqa`, `// eslint-disable-next-line`).

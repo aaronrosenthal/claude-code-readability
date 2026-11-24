@@ -15,8 +15,8 @@ measured.
 | :- | :- | :- |
 | A | Claude Code without the plugin | the native no-plugin baseline (`--ablation with-without`) of the D run |
 | B | Skill only, no enforcement | plugin variant with `skills/` only |
-| C | Hook with minimal feedback, no skill | plugin variant with the hook and `--feedback=minimal` (locations only, no reasons or guidance) |
-| D | Full plugin | plugin variant with skill, hook, and actionable feedback |
+| C | Hook with minimal feedback, no skill | plugin variant with the hook in `balanced` (blocking) mode and `--feedback=minimal` (locations only, no reasons or guidance) |
+| D | Full plugin | plugin variant with skill, hook, and actionable feedback, in the default mode (`balanced` up to 0.1.1, `advisory` from 0.2.0) |
 
 `evals/tools/build-variants.mjs` builds B, C, and D from the same files with the same manifest, so they differ only in
 the treatment. All arms use the same cases, scaffolds, tool grants (`Write Edit NotebookEdit Bash`, OS-sandboxed),

@@ -18,7 +18,7 @@ function copy(from, to) {
 function hooksConfig(feedback) {
   const hooks = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'hooks', 'hooks.json'), 'utf8'));
   if (feedback === 'minimal') {
-    for (const group of hooks.hooks.PreToolUse) for (const hook of group.hooks) hook.args = [...hook.args, '--feedback=minimal'];
+    for (const group of hooks.hooks.PreToolUse) for (const hook of group.hooks) hook.args = [...hook.args, '--feedback=minimal', '--mode=balanced'];
   }
   return hooks;
 }

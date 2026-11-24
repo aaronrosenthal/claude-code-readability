@@ -20,7 +20,7 @@
   "properties": {
     "$schema": { "type": "string" },
     "description": { "type": "string" },
-    "mode": { "$ref": "#/$defs/mode", "default": "balanced" },
+    "mode": { "$ref": "#/$defs/mode", "default": "advisory" },
     "feedback": { "enum": ["actionable", "minimal"], "default": "actionable" },
     "exclude": {
       "type": "array",

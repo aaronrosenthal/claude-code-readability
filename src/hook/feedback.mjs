@@ -62,7 +62,10 @@ export function blockMessage(results, config) {
 
 export function advisoryMessage(results) {
   const { lines } = describeFindings(results);
-  return ['readability (advisory): these new comments may be unnecessary. Consider whether the code can express them directly; no change is required.', ...lines].join('\n');
+  return [
+    'readability (advisory): these new comments may be unnecessary. If a comment only says what the code does, consider expressing it in the code (names, types, control flow) instead. Keep any comment that records a reason, rule, precondition, or external fact the code cannot express. No change is required.',
+    ...lines,
+  ].join('\n');
 }
 
 export function configProtectionMessage(relativePath) {

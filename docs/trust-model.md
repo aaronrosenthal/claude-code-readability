@@ -54,5 +54,5 @@ rather than assumed.
 ## Security tools are out of scope
 
 Suppressing a security scanner (Bandit `# nosec`, tfsec, Checkov, Semgrep, ...) goes through the same suppression policy
-as any other linter: it is recognized, and it must be specific and justified in balanced mode. That is a readability
+as any other linter: it is recognized, and it must be specific and justified in balanced mode (advisory mode reports it). That is a readability
 and hygiene rule. Use your CI and code review, not this hook, to enforce security policy.
