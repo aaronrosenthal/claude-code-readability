@@ -6,7 +6,7 @@ A Claude Code plugin that teaches Claude to write intrinsically readable code an
 introduced comments that only compensate for unclear code. It ships a skill, a `PreToolUse` hook, a language-aware
 comment classifier for 31 languages, and an evaluation suite designed to test whether any of this actually helps.
 
-> Status: v0.1.0, experimental. The hypothesis below is **not proven**. See [Evaluation results](#evaluation-results)
+> Status: v0.1.1, experimental. The hypothesis below is **not proven**. See [Evaluation results](#evaluation-results)
 > for what has been measured so far, including where the plugin did not help.
 
 ## The observation
@@ -216,13 +216,18 @@ links to each tool's documentation is in [docs/directives.md](docs/directives.md
 ## Known limitations
 
 - **Shell writes are mostly unchecked.** Only `cat > file <<EOF` and `tee file <<EOF` with literal paths are analyzed;
-  `printf`, `sed -i`, scripts, and MCP tools that write files are not. In the smoke eval, agents wrote source files
-  through the shell (often `python3 -` scripts) in 0.13 to 0.5 of runs per arm, with or without the plugin. None of
-  those writes followed a rejection, but they are not checked.
-- **Reason comments about facts can be rejected.** In the smoke eval, 4 of the 5 comments the hook rejected were judged
-  necessary. They stated non-obvious facts, such as which letters do not decompose under Unicode NFD, without
-  causal words like "because". If this happens in your code, add an exception tag, or set that language to `advisory`
-  mode with a language override, and please report the example.
+  `printf`, `sed -i`, scripts, and MCP tools that write files are not. In the research eval, agents wrote source files
+  through the shell (often `python3 -` scripts) 0.27 to 0.68 times per run, depending on the arm, with or without the plugin. 29
+  of them came after a rejection (16 runs, nearly all in arm C). The final code of those runs had no comment the hook
+  would reject, so none smuggled a comment past it. Still, these writes are not checked.
+- **Reason comments about facts are often rejected.** In the research eval, the blinded audit labeled most of the
+  comments the hook rejected as necessary (66% in arm C, after the 0.1.1 fixes). These comments state constraints or
+  facts without causal words like "because", for example "Caller must hold the lock", or "Letters that don't decompose
+  under NFD". If this happens in your code, add an exception tag, or set that language to `advisory` mode with a
+  language override, and please report the example.
+- **The skill can suppress useful comments.** In the same eval, a blinded judge preferred code written without the
+  plugin when it could see the comments, mainly because that code kept domain rules and the reasons for non-obvious
+  choices.
 - **Classification is heuristic.** "Restates the code" and "explains a name" are judged from word overlap and simple
   patterns, not understanding. In balanced mode, a prose comment that is not a directive, a tagged exception, a
   reference, a license, or acceptable documentation is rejected, so some legitimate comments need an exception tag.
@@ -273,47 +278,45 @@ presentation order. Methodology, metrics, and limitations: [docs/evaluation.md](
 
 ### Evaluation results
 
-Only the **smoke suite** has been run so far: 4 cases × 4 arms × 2 runs = 32 agent runs with `claude-sonnet-5-5`, at
-$2.36 for the agents plus about $1.34 for blinded judging (judged by `claude-sonnet-5-5`). The full research suite has
-not been run. With n = 8 runs per arm and 4 cases, these numbers are a pilot. They neither confirm nor refute the
-hypothesis. Full report: [docs/results/smoke-2026-11-24.md](docs/results/smoke-2026-11-24.md).
+The research suite ran on 2026-11-24 with the v0.1.0 hook and `claude-sonnet-5-5`: 45 cases × 4 arms × 2 runs = 360
+runs, $49.27 for the agents and $7.25 for blinded judging and the comment audit. Full report and caveats:
+[docs/results/research-2026-11-24.md](docs/results/research-2026-11-24.md).
 
-| Metric (mean per run, 95% CI) | A: no plugin | B: skill | C: hook, minimal | D: full |
+| Metric (mean per run) | A: no plugin | B: skill | C: hook, minimal | D: full |
 | :- | -: | -: | -: | -: |
-| Correctness | 8/8 | 8/8 | 8/8 | 8/8 |
-| New non-directive comment lines | 1.00 [0.25, 1.88] | 0.25 [0, 0.63] | 0.25 [0, 0.63] | 0.25 [0, 0.63] |
-| Comment lines per 100 changed lines | 3.05 | 1.47 | 1.39 | 1.47 |
-| Unrelated churn (lines) | 0 | 0 | 0 | 0 |
-| Approx. cognitive complexity | 6.50 | 6.25 | 6.38 | 6.50 |
-| Hook rejections | n/a | n/a | 0.25 | 0 |
-| Tokens | 68k | 80k | 75k | 85k |
-| Wall-clock seconds | 10.3 | 11.1 | 11.1 | 11.9 |
-| Cost (USD) | 0.07 | 0.08 | 0.07 | 0.08 |
+| Correctness | 100% | 100% | 96%¹ | 99% |
+| New non-directive comment lines | 2.91 | 2.07 | 1.72 | 1.98 |
+| Approx. cognitive complexity | 14.8 | 11.4 | 14.4 | 11.1 |
+| Maintainability grader PASS (per run) | 58% | 79% | 52% | 76% |
+| Hook rejections | n/a | n/a | 0.52 | 0.17 |
+| Rejected comments judged necessary | n/a | n/a | 68% | 53% |
+| Tokens | 86k | 99k | 97k | 102k |
+| Cost (USD) | 0.08 | 0.10 | 0.09 | 0.10 |
 
-What the smoke run shows:
+¹ All four failures were caused by two hook bugs that are fixed in 0.1.1.
 
-- **Correctness and churn did not change.** Every arm passed every case. No arm touched lines outside the target files.
-- **Comments dropped, but nearly all of the difference is one case.** In `typescript-slugify`, A wrote 3 new comment
-  lines per run and every plugin arm wrote 0. The other three cases had the same counts in every arm. In
-  `ruby-style-documentation-smoke`, the 1 line in every arm is the class documentation RuboCop requires.
-- **The skill did the work in arm D. The hook did not.** D was never rejected, so its effect came from the skill. Arm C
-  (hook only) had 2 rejections. The heuristics labeled the revisions "identifier improvement" and "control flow
-  improvement", not "comment deletion only".
-- **The plugin costs tokens.** D used about 17k more tokens per run than A (paired CI [8.6k, 27k], about +25%), was about
-  1.6 s slower, and cost about $0.01 more per run.
-- **The blinded judge leaned toward D, weakly.** On code with comments removed, D beat A on readability 4 times, lost
-  once, and tied 3 times. On maintainability as written, D won 4, lost 0, tied 3, and 1 comparison was inconsistent.
-  B vs D was even or slightly favored B (readability: B 2, D 0, 4 ties, 2 inconsistent). The intervals are wide.
-- **Hook false positives were high where the hook fired.** Of the 5 distinct comments the hook rejected in arm C, the
-  blinded audit labeled 4 as necessary. All 4 stated a non-obvious fact about the input or the algorithm, for example "Letters that
-  don't decompose under NFD" above a transliteration table. The classifier does not recognize this kind of reason. This
-  is the clearest negative signal so far. The rule was not tuned against these examples, so it can be tested fresh on
-  the research suite.
-- **Comments written without the plugin were mostly unnecessary.** Of A's 6 new comments, the judge labeled 4 (67%)
-  unnecessary.
-- **Shell writes happen without any rejection.** In every arm, agents sometimes wrote source files through Bash: A 0.5,
-  B 0.25, C 0.5, and D 0.13 per run, often `python3 -` scripts that the hook cannot inspect. None of them followed a
-  rejection, but this channel is unchecked (see [Known limitations](#known-limitations)).
+Blinded pairwise judge, A vs D, decisive comparisons only:
+
+| Question | D preferred |
+| :- | -: |
+| Readability, comments removed | 77% [64%, 87%] |
+| Identifiers, comments removed | 100% (47 of 47) |
+| Maintainability, code as written | 37% [26%, 49%] |
+
+What this means:
+
+- **The hypothesis is partly supported, and mostly by the skill.** With the skill, the code was more readable
+  structurally and had lower complexity, and correctness held. Arm B (skill only) did about as well as D. The hook
+  fired only 0.17 times per run in D. Arm C (hook without the skill) mostly deleted comments (16 of 24 revisions) and
+  did not reduce complexity.
+- **The plugin removes comments worth keeping.** With comments visible, the pairwise judge preferred the code written
+  without the plugin. In 39 of its 41 rationales, it cites context that D left out, such as the rule behind a regex or
+  the reason for a numeric clamp. The per-run maintainability grader, which used a different model and judged each run
+  alone, favored D. Treat this as an open problem, not a tie.
+- **The hook's precision is poor.** Even after the 0.1.1 fixes, about two thirds of the comments it rejected in arm C
+  were judged necessary.
+
+[Smoke suite pilot](docs/results/smoke-2026-11-24.md) (32 runs): the same direction with very wide intervals.
 
 ### Reproduce
 

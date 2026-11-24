@@ -62,5 +62,5 @@ node evals/tools/gate.mjs evals/results/arms/<timestamp> --max-correctness-drop 
 
 ## Results
 
-- [Smoke suite, 2026-11-24](../docs/results/smoke-2026-11-24.md): a pilot with 32 runs. The research suite has not
-  been run yet.
+- [Research suite, 2026-11-24](../docs/results/research-2026-11-24.md): 360 runs, v0.1.0 hook.
+- [Smoke suite, 2026-11-24](../docs/results/smoke-2026-11-24.md): a pilot with 32 runs.

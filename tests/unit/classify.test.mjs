@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { detectDeclaration } from '../../src/classify/declarations.mjs';
 import { analyze, configWith, reasons, requiredFor, unknownRequirements } from '../helpers.mjs';
 
 test('rejects a comment that narrates the code', () => {
@@ -89,6 +90,17 @@ test('Python: bare string statements used as comments are rejected, docstrings a
     'def parse_invoice(raw: bytes) -> Invoice:\n    """Parse an invoice. Raises InvoiceError when the checksum does not match the payload."""\n    return Invoice()\n',
   );
   assert.equal(doc.findings.length, 0, 'public non-restating docstrings are allowed in balanced mode');
+});
+
+test('Python: docstrings after a signature that spans several lines are documentation', () => {
+  const functionDoc = analyze(
+    'a.py',
+    'def issue_refund(\n    invoice: Invoice,\n    issued_on: date,\n) -> Refund:\n    """Create a refund. Raises ValueError when the 90-day window has passed."""\n    return Refund()\n',
+  );
+  assert.equal(functionDoc.findings.length, 0);
+  const classDoc = analyze('a.py', 'class Ledger(\n    Base,\n    metaclass=Registry,\n):\n    """Append-only record of settled payments, keyed by settlement date."""\n');
+  assert.equal(classDoc.findings.length, 0);
+  assert.deepEqual(reasons(analyze('a.py', 'if (\n    ready\n):\n    """now we start the job"""\n    start()\n')), ['bare-string-comment']);
 });
 
 test('documentation that restates the declaration is rejected', () => {
@@ -259,4 +271,16 @@ test('Python attribute docstrings are documentation only at module and class sco
   assert.equal(attribute.findings.length, 0);
   const inFunction = analyze('a.py', 'def f():\n    x = 1\n    """now we return the value"""\n    return x\n');
   assert.deepEqual(reasons(inFunction), ['bare-string-comment']);
+});
+
+test('C# and Java constructors keep their declared visibility', () => {
+  assert.deepEqual(detectDeclaration('csharp', '    public LateFeeCalculator(decimal dailyRate, int graceDays)'), {
+    kind: 'method',
+    name: 'LateFeeCalculator',
+    visibility: 'public',
+  });
+  assert.deepEqual(detectDeclaration('csharp', '    internal Ledger(DateOnly openedOn)'), { kind: 'method', name: 'Ledger', visibility: 'internal' });
+  assert.deepEqual(detectDeclaration('java', '    public Ledger(LocalDate openedOn) {'), { kind: 'method', name: 'Ledger', visibility: 'public' });
+  assert.deepEqual(detectDeclaration('java', '    protected Ledger() {'), { kind: 'method', name: 'Ledger', visibility: 'protected' });
+  assert.deepEqual(detectDeclaration('csharp', '    public decimal Calculate(Loan loan)'), { kind: 'method', name: 'Calculate', visibility: 'public' });
 });

@@ -71,6 +71,18 @@ function lineAt(source, offset) {
   return source.slice(start, end);
 }
 
+function statementStart(masked, offset) {
+  let depth = 0;
+  let cursor = offset;
+  for (; cursor > 0; cursor--) {
+    const char = masked[cursor - 1];
+    if (char === ')' || char === ']' || char === '}') depth++;
+    else if (char === '(' || char === '[' || char === '{') depth--;
+    else if (char === '\n' && depth <= 0 && !/\\[ \t]*$/.test(masked.slice(masked.lastIndexOf('\n', cursor - 2) + 1, cursor - 1))) break;
+  }
+  return cursor;
+}
+
 function enclosingPythonScope(masked, offset) {
   const lineStart = masked.lastIndexOf('\n', offset - 1) + 1;
   let indent = /^[ \t]*/.exec(masked.slice(lineStart))[0].length;
@@ -114,9 +126,9 @@ export function findPythonStringStatements(source, lexed) {
     let headerLine = null;
     if (previousChar === null) position = 'module';
     else if (previousChar === ':') {
-      headerLine = lineAt(lexed.masked, previous).trim();
-      position = /^(?:async\s+def|def|class)\b/.test(headerLine) ? 'definition' : 'statement';
-      if (position === 'definition') headerLine = lineAt(source, previous);
+      const start = statementStart(lexed.masked, previous);
+      position = /^(?:async\s+def|def|class)\b/.test(lineAt(lexed.masked, start).trim()) ? 'definition' : 'statement';
+      headerLine = position === 'definition' ? lineAt(source, start) : lineAt(lexed.masked, start).trim();
     } else {
       const previousLine = lineAt(lexed.masked, previous).trim();
       const isAssignment = /^[\w.]+\s*(?::[^=]+)?=/.test(previousLine) || /^[\w.]+\s*:\s*[^=]+$/.test(previousLine);

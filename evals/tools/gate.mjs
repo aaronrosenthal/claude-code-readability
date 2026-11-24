@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { isInfrastructureError } from './analyze.mjs';
 
 const out = path.resolve(process.argv[2] ?? '');
 const flag = process.argv.indexOf('--max-correctness-drop');
@@ -10,7 +11,10 @@ if (!fs.existsSync(metricsPath)) {
   console.error(`Usage: node evals/tools/gate.mjs <arms output directory> [--max-correctness-drop <points>] (run analyze.mjs first)`);
   process.exit(1);
 }
-const metrics = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
+const allMetrics = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
+const metrics = allMetrics.filter((entry) => !isInfrastructureError(entry));
+const errored = allMetrics.length - metrics.length;
+if (errored > 0) console.log(`warning: ${errored} run(s) ended in an API or usage-limit error and are excluded; rerun them for a balanced comparison`);
 const rate = (arm) => {
   const runs = metrics.filter((entry) => entry.arm === arm);
   return runs.length ? (100 * runs.filter((entry) => entry.correct).length) / runs.length : null;

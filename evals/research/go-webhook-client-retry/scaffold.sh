@@ -63,7 +63,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -71,15 +71,22 @@ import (
 
 var testEvent = Event{ID: "evt_123", Type: "invoice.paid", Payload: []byte(`{"amount":4200}`)}
 
+const endpoint = "https://hooks.example.test/deliveries"
+
+var errConnectionRefused = errors.New("connection refused")
+
 type recorder struct {
-	mu       sync.Mutex
-	bodies   [][]byte
-	headers  []http.Header
-	statuses []int
+	mu        sync.Mutex
+	bodies    [][]byte
+	headers   []http.Header
+	statuses  []int
+	refuseAll bool
+	afterCall func()
 }
 
-func (r *recorder) handler(w http.ResponseWriter, req *http.Request) {
+func (r *recorder) RoundTrip(req *http.Request) (*http.Response, error) {
 	body, _ := io.ReadAll(req.Body)
+	req.Body.Close()
 
 	r.mu.Lock()
 	call := len(r.bodies)
@@ -89,9 +96,17 @@ func (r *recorder) handler(w http.ResponseWriter, req *http.Request) {
 	if call < len(r.statuses) {
 		status = r.statuses[call]
 	}
+	refuse := r.refuseAll
+	afterCall := r.afterCall
 	r.mu.Unlock()
 
-	w.WriteHeader(status)
+	if afterCall != nil {
+		afterCall()
+	}
+	if refuse {
+		return nil, errConnectionRefused
+	}
+	return &http.Response{StatusCode: status, Body: io.NopCloser(strings.NewReader("")), Header: http.Header{}, Request: req}, nil
 }
 
 func (r *recorder) calls() int {
@@ -100,27 +115,27 @@ func (r *recorder) calls() int {
 	return len(r.bodies)
 }
 
-func newServer(t *testing.T, statuses ...int) (*httptest.Server, *recorder) {
-	t.Helper()
-	rec := &recorder{statuses: statuses}
-	server := httptest.NewServer(http.HandlerFunc(rec.handler))
-	t.Cleanup(server.Close)
-	return server, rec
+func newRecorder(statuses ...int) *recorder {
+	return &recorder{statuses: statuses}
 }
 
-func newClient() *Client {
-	return &Client{Secret: []byte("whsec_test"), Backoff: func(int) time.Duration { return time.Millisecond }}
+func newClient(rec *recorder) *Client {
+	return &Client{
+		Secret:  []byte("whsec_test"),
+		Backoff: func(int) time.Duration { return time.Millisecond },
+		HTTP:    &http.Client{Transport: rec},
+	}
 }
 
 func TestDeliverSignsBody(t *testing.T) {
-	server, rec := newServer(t, http.StatusOK)
+	rec := newRecorder(http.StatusOK)
 
-	if err := newClient().Deliver(context.Background(), server.URL, testEvent); err != nil {
+	if err := newClient(rec).Deliver(context.Background(), endpoint, testEvent); err != nil {
 		t.Fatalf("Deliver() error = %v", err)
 	}
 
 	if rec.calls() != 1 {
-		t.Fatalf("server saw %d calls, want 1", rec.calls())
+		t.Fatalf("endpoint saw %d calls, want 1", rec.calls())
 	}
 	mac := hmac.New(sha256.New, []byte("whsec_test"))
 	mac.Write(rec.bodies[0])
@@ -142,14 +157,14 @@ func TestDeliverSignsBody(t *testing.T) {
 }
 
 func TestDeliverRetriesServerErrorsWithSameBody(t *testing.T) {
-	server, rec := newServer(t, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusOK)
+	rec := newRecorder(http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusOK)
 
-	if err := newClient().Deliver(context.Background(), server.URL, testEvent); err != nil {
+	if err := newClient(rec).Deliver(context.Background(), endpoint, testEvent); err != nil {
 		t.Fatalf("Deliver() error = %v", err)
 	}
 
 	if rec.calls() != 3 {
-		t.Fatalf("server saw %d calls, want 3", rec.calls())
+		t.Fatalf("endpoint saw %d calls, want 3", rec.calls())
 	}
 	for i := 1; i < 3; i++ {
 		if string(rec.bodies[i]) != string(rec.bodies[0]) {
@@ -162,57 +177,58 @@ func TestDeliverRetriesServerErrorsWithSameBody(t *testing.T) {
 }
 
 func TestDeliverDoesNotRetryClientErrors(t *testing.T) {
-	server, rec := newServer(t, http.StatusGone)
+	rec := newRecorder(http.StatusGone)
 
-	err := newClient().Deliver(context.Background(), server.URL, testEvent)
+	err := newClient(rec).Deliver(context.Background(), endpoint, testEvent)
 
 	var statusErr *StatusError
 	if !errors.As(err, &statusErr) || statusErr.Code != http.StatusGone {
 		t.Fatalf("Deliver() error = %v, want StatusError 410", err)
 	}
 	if rec.calls() != 1 {
-		t.Errorf("server saw %d calls, want 1", rec.calls())
+		t.Errorf("endpoint saw %d calls, want 1", rec.calls())
 	}
 }
 
 func TestDeliverGivesUpAfterMaxAttempts(t *testing.T) {
-	server, rec := newServer(t, http.StatusServiceUnavailable)
+	rec := newRecorder(http.StatusServiceUnavailable)
 
-	err := newClient().Deliver(context.Background(), server.URL, testEvent)
+	err := newClient(rec).Deliver(context.Background(), endpoint, testEvent)
 
 	var statusErr *StatusError
 	if !errors.As(err, &statusErr) || statusErr.Code != http.StatusServiceUnavailable {
 		t.Fatalf("Deliver() error = %v, want wrapped StatusError 503", err)
 	}
 	if rec.calls() != 3 {
-		t.Errorf("default attempts: server saw %d calls, want 3", rec.calls())
+		t.Errorf("default attempts: endpoint saw %d calls, want 3", rec.calls())
 	}
 
-	client := newClient()
+	rec = newRecorder(http.StatusServiceUnavailable)
+	client := newClient(rec)
 	client.MaxAttempts = 5
-	rec.mu.Lock()
-	rec.bodies = nil
-	rec.mu.Unlock()
-	client.Deliver(context.Background(), server.URL, testEvent)
+	client.Deliver(context.Background(), endpoint, testEvent)
 	if rec.calls() != 5 {
-		t.Errorf("MaxAttempts=5: server saw %d calls, want 5", rec.calls())
+		t.Errorf("MaxAttempts=5: endpoint saw %d calls, want 5", rec.calls())
 	}
 }
 
 func TestDeliverRetriesNetworkErrors(t *testing.T) {
-	server, _ := newServer(t, http.StatusOK)
-	url := server.URL
-	server.Close()
+	rec := newRecorder(http.StatusOK)
+	rec.refuseAll = true
 
 	var waits int
-	client := newClient()
+	client := newClient(rec)
 	client.Backoff = func(failedAttempt int) time.Duration {
 		waits++
 		return time.Millisecond
 	}
 
-	if err := client.Deliver(context.Background(), url, testEvent); err == nil {
-		t.Fatal("Deliver() error = nil, want a network error")
+	err := client.Deliver(context.Background(), endpoint, testEvent)
+	if !errors.Is(err, errConnectionRefused) {
+		t.Fatalf("Deliver() error = %v, want the wrapped network error", err)
+	}
+	if rec.calls() != 3 {
+		t.Errorf("endpoint saw %d calls, want 3", rec.calls())
 	}
 	if waits != 2 {
 		t.Errorf("backoff consulted %d times, want 2", waits)
@@ -223,18 +239,14 @@ func TestDeliverStopsWhenContextCancelledDuringBackoff(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	rec := &recorder{statuses: []int{http.StatusInternalServerError}}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rec.handler(w, r)
-		cancel()
-	}))
-	defer server.Close()
+	rec := newRecorder(http.StatusInternalServerError)
+	rec.afterCall = cancel
 
-	client := newClient()
+	client := newClient(rec)
 	client.Backoff = func(int) time.Duration { return time.Hour }
 
 	done := make(chan error, 1)
-	go func() { done <- client.Deliver(ctx, server.URL, testEvent) }()
+	go func() { done <- client.Deliver(ctx, endpoint, testEvent) }()
 
 	select {
 	case err := <-done:
@@ -245,7 +257,7 @@ func TestDeliverStopsWhenContextCancelledDuringBackoff(t *testing.T) {
 		t.Fatal("Deliver() did not return after the context was cancelled")
 	}
 	if rec.calls() != 1 {
-		t.Errorf("server saw %d calls, want 1", rec.calls())
+		t.Errorf("endpoint saw %d calls, want 1", rec.calls())
 	}
 }
 EOF

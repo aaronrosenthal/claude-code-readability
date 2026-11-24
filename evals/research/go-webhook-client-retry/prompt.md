@@ -16,6 +16,6 @@ Our customers' endpoints are flaky, so we need a proper webhook sender. `Client.
 - If every attempt fails, return an error that wraps the last failure so callers can still use `errors.As` for `*StatusError`.
 - Use `Client.HTTP`, falling back to `http.DefaultClient` when it is nil.
 
-`webhook/client_test.go` uses `httptest.Server` to cover these.
+`webhook/client_test.go` covers these with a fake `http.RoundTripper` on `Client.HTTP`.
 
 When you're done, run `go test ./...` and save its complete output to `test-results.txt`.

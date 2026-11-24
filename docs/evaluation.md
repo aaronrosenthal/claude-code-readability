@@ -122,7 +122,12 @@ claude plugin eval . --scaffold --trust-plugin --allow-tools Write Edit Notebook
 
 Shell grants run under Claude Code's OS sandbox (macOS: built in; Linux: install `bubblewrap` and `socat`; Windows:
 use WSL2). The case toolchains (`python3`, `node`, `ruby` with minitest, `go`, `cargo`, `javac`/`java`, `dotnet`) must be
-on `PATH`; cases whose toolchain is missing are skipped and listed. The eval sandbox has no network, so no case downloads
+on `PATH`; cases whose toolchain is missing are skipped and listed. The eval's OS sandbox cannot read your home
+directory or `/tmp`, and outside system locations it only lets runs read directories on `PATH` and their subtrees. A
+toolchain installed under your home directory therefore fails inside runs (`operation not permitted`, or `blocked by
+sandbox` for its `lib/` directory) even though `validate-fixtures.mjs` passes outside the sandbox. Install toolchains
+elsewhere (for example `/Users/Shared` on macOS) and put each toolchain's root directory on `PATH` as well as its `bin/`.
+The analysis report warns when a case fails in every run of every arm. The eval sandbox has no network, so no case downloads
 dependencies.
 
 The manually triggered GitHub workflow `Evals (manual, paid)` runs the same commands with a budget input and uploads the
@@ -130,7 +135,8 @@ report as an artifact. It fails if correctness in any arm drops more than a conf
 
 ## Results
 
-Smoke suite pilot: [docs/results/smoke-2026-11-24.md](results/smoke-2026-11-24.md).
+- Research suite, 360 runs: [docs/results/research-2026-11-24.md](results/research-2026-11-24.md).
+- Smoke suite pilot, 32 runs: [docs/results/smoke-2026-11-24.md](results/smoke-2026-11-24.md).
 
 ## Limitations
 

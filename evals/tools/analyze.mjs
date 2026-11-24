@@ -148,7 +148,7 @@ function analyzeRun({ testCase, fixtureRoot, runDirectory }) {
       targets.includes(relative) ||
       (!fixtureFiles.has(relative) && !tests.has(relative) && lexFile(relative, after ?? '') !== null && !/(?:^|\/)tests?\/|_test\.|\.test\.|Test\.java$|Tests?\//.test(relative));
     if (isTarget) changedLines += diff.added + diff.removed;
-    else if (!tests.has(relative)) unrelatedChurn += diff.added + diff.removed;
+    else if (!tests.has(relative) && !GENERATED_LOCKFILE.test(relative)) unrelatedChurn += diff.added + diff.removed;
     if (isTarget && after) {
       const beforeStats = before ? commentStats(relative, before) : { commentLines: 0 };
       const afterStats = commentStats(relative, after);
@@ -228,10 +228,33 @@ function metricValue(entry, key) {
   return key.split('.').reduce((value, part) => (value === null || value === undefined ? null : value[part]), entry);
 }
 
-export function summarize(results, judgments = null) {
+const GENERATED_LOCKFILE = /(?:^|\/)(?:Cargo\.lock|package-lock\.json|go\.sum|Gemfile\.lock|poetry\.lock|yarn\.lock|pnpm-lock\.yaml)$/;
+
+const INFRASTRUCTURE_ERROR = /usage limit|5-hour limit|rate[_ ]limit|overloaded|api_error|\b(?:429|5\d\d)\b/i;
+
+export function isInfrastructureError(entry) {
+  return Boolean(entry.error) && INFRASTRUCTURE_ERROR.test(String(entry.error));
+}
+
+export function summarize(allResults, judgments = null) {
+  const results = allResults.filter((entry) => !isInfrastructureError(entry));
+  const excluded = allResults.length - results.length;
   const arms = [...new Set(results.map((entry) => entry.arm))].sort();
   const lines = ['# Readability evaluation report', ''];
   lines.push(`Runs analyzed: ${results.length} across ${new Set(results.map((entry) => entry.case)).size} cases and arms ${arms.join(', ')}.`, '');
+  if (excluded > 0) {
+    lines.push(
+      `**Excluded:** ${excluded} run(s) that ended in an API or usage-limit error before the agent could work. They say nothing about the treatment and are not counted as incorrect. Rerun them for a balanced comparison.`,
+      '',
+    );
+  }
+  const failedEverywhere = [...new Set(results.map((entry) => entry.case))].filter((name) => results.every((entry) => entry.case !== name || !entry.correct));
+  if (failedEverywhere.length > 0) {
+    lines.push(
+      `**Warning:** ${failedEverywhere.length} case(s) failed in every run of every arm, which usually means the environment is broken (for example a toolchain the eval sandbox cannot read) rather than the treatment: ${failedEverywhere.map((name) => `\`${name}\``).join(', ')}. Check their \`test-results.txt\` before interpreting the results.`,
+      '',
+    );
+  }
   lines.push(
     'Intervals are 95% bootstrap intervals over runs (rates: Wilson intervals). They describe run-to-run variation for these fixed cases and model, not a population of tasks.',
     '',

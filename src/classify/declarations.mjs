@@ -73,6 +73,10 @@ const DETECTORS = {
     if (match) return { kind: 'class', name: match[3], visibility: visibilityFromModifiers(match[1], defaultVisibility) };
     match = new RegExp(`^(${modifiers})(fun|func|function|def|init|constructor)\\b\\s*(?:<[^>]*>\\s*)?([\\w.]+)?`).exec(line);
     if (match) return { kind: indented ? 'method' : 'function', name: match[3] ?? match[2], visibility: visibilityFromModifiers(match[1], defaultVisibility) };
+    match = new RegExp(`^(${modifiers})(~?[A-Za-z_]\\w*)\\s*\\(`).exec(line);
+    if (match?.[1] && !/^(?:if|for|while|switch|catch|return|else|new|throw|using|lock|sizeof)$/.test(match[2])) {
+      return { kind: indented ? 'method' : 'function', name: match[2], visibility: visibilityFromModifiers(match[1], defaultVisibility) };
+    }
     match = new RegExp(`^(${modifiers})(?:[\\w.<>,\\[\\]?*&:\\s]+?\\s+)(~?[A-Za-z_]\\w*)\\s*\\(`).exec(line);
     if (match && !/^(?:if|for|while|switch|catch|return|else|new|throw|using|lock|sizeof)$/.test(match[2])) {
       return { kind: indented ? 'method' : 'function', name: match[2], visibility: visibilityFromModifiers(match[1], defaultVisibility) };

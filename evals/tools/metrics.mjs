@@ -135,7 +135,8 @@ const TYPE_PATTERNS = {
 
 export function structure(relativePath, source) {
   const lexed = lexFile(relativePath, source);
-  const family = lexed?.family ?? familyOf(detectLanguage(relativePath)?.id);
+  const language = detectLanguage(relativePath);
+  const family = lexed?.family ?? (language ? familyOf(language) : null);
   const code = lexed ? lexed.masked : source;
   const functionPattern = FUNCTION_PATTERNS[family];
   const typePattern = TYPE_PATTERNS[family];

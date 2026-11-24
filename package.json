@@ -1,6 +1,6 @@
 {
   "name": "claude-code-readability",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Claude Code plugin that makes the code explain itself: a readability skill plus a deterministic hook that rejects unnecessary new comments.",
   "license": "MIT",
