@@ -1,7 +1,7 @@
 {
   "name": "readability",
   "displayName": "Readability",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Make the code explain itself: a readability skill plus a deterministic hook that blocks newly introduced unnecessary comments and unauthorized linter suppressions, while respecting project documentation requirements.",
   "author": { "name": "Aaron Rosenthal", "url": "https://github.com/aaronrosenthal" },
   "homepage": "https://github.com/aaronrosenthal/claude-code-readability",

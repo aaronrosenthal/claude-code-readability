@@ -135,7 +135,8 @@ report as an artifact. It fails if correctness in any arm drops more than a conf
 
 ## Results
 
-- Research suite, 360 runs: [docs/results/research-2026-11-24.md](results/research-2026-11-24.md).
+- v0.2.0 research suite, 270 runs: [docs/results/v0.2-research-2026-11-25.md](results/v0.2-research-2026-11-25.md).
+- v0.1.x research suite, 360 runs: [docs/results/research-2026-11-24.md](results/research-2026-11-24.md).
 - Smoke suite pilot, 32 runs: [docs/results/smoke-2026-11-24.md](results/smoke-2026-11-24.md).
 
 ## Limitations

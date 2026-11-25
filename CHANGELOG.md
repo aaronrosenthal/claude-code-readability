@@ -3,6 +3,31 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-11-25
+
+### Changed
+
+- **The default mode is now `advisory`.** It classifies comments like `balanced`, but only tells Claude which comments
+  and suppressions look unnecessary. It never blocks a comment.
+  - **Why:** in the 0.1.x research eval, about two thirds of the comments the blocking hook rejected were judged
+    necessary.
+  - **Still enforced:** edits to the readability configuration and edits that weaken a linter's documentation rules
+    ask for confirmation in every mode except `off`.
+  - **To keep blocking:** set `"mode": "balanced"` or `"mode": "strict"`.
+- **Advisory mode now checks suppressions too.** It reports documentation-rule suppressions and unjustified
+  suppressions (`suppressions.new` `auto` resolves to `justify`) instead of skipping them.
+- **The advisory note tells Claude to keep comments that give context.** That covers any comment recording a reason,
+  rule, precondition, or external fact.
+- **The `readable-code` skill asks for comments that explain why.** It targets comments that say *what* the code does,
+  not every explanatory comment. It now lists the comments to keep:
+  - the rule behind a value that looks arbitrary;
+  - the reason for a guard that looks removable;
+  - surprising library behavior;
+  - preconditions of private helpers.
+
+  With comments visible, the blinded judge's preference for the plugin's code rose from 37% to 56%.
+- **The hook script accepts `--mode=<mode>`.** Eval arm C uses it to keep measuring the blocking hook.
+
 ## [0.1.1] - 2026-11-24
 
 ### Fixed

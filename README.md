@@ -6,7 +6,7 @@ A Claude Code plugin that teaches Claude to write intrinsically readable code an
 introduced comments that only compensate for unclear code. It ships a skill, a `PreToolUse` hook, a language-aware
 comment classifier for 31 languages, and an evaluation suite designed to test whether any of this actually helps.
 
-> Status: v0.1.1, experimental. The hypothesis below is **not proven**. See [Evaluation results](#evaluation-results)
+> Status: v0.2.0, experimental. The hypothesis below is **not proven**. See [Evaluation results](#evaluation-results)
 > for what has been measured so far, including where the plugin did not help.
 
 ## The observation
@@ -223,14 +223,14 @@ links to each tool's documentation is in [docs/directives.md](docs/directives.md
   through the shell (often `python3 -` scripts) 0.27 to 0.68 times per run, depending on the arm, with or without the plugin. 29
   of them came after a rejection (16 runs, nearly all in arm C). The final code of those runs had no comment the hook
   would reject, so none smuggled a comment past it. Still, these writes are not checked.
-- **Reason comments about facts are often rejected.** In the research eval, the blinded audit labeled most of the
-  comments the hook rejected as necessary (66% in arm C, after the 0.1.1 fixes). These comments state constraints or
-  facts without causal words like "because", for example "Caller must hold the lock", or "Letters that don't decompose
-  under NFD". If this happens in your code, add an exception tag, or set that language to `advisory` mode with a
-  language override, and please report the example.
-- **The skill can suppress useful comments.** In the same eval, a blinded judge preferred code written without the
-  plugin when it could see the comments, mainly because that code kept domain rules and the reasons for non-obvious
-  choices.
+- **Reason comments about facts are often flagged.** In the 0.1.x research eval, the blinded audit labeled most comments
+  the blocking hook rejected as necessary. These comments state constraints or facts without causal words like
+  "because", for example "Caller must hold the lock". The classifier still flags many of them, which is why `advisory`
+  is the default. In `balanced` or `strict` mode, add an exception tag to keep such a comment, and please report the
+  example.
+- **The hook adds little over the skill.** In the 0.2.0 eval, the skill alone did as well as the full plugin. The hook
+  mainly protects against circumvention: suppressing documentation rules, weakening linter config, and editing the
+  readability config.
 - **Classification is heuristic.** "Restates the code" and "explains a name" are judged from word overlap and simple
   patterns, not understanding. In balanced mode, a prose comment that is not a directive, a tagged exception, a
   reference, a license, or acceptable documentation is rejected, so some legitimate comments need an exception tag.
@@ -281,45 +281,43 @@ presentation order. Methodology, metrics, and limitations: [docs/evaluation.md](
 
 ### Evaluation results
 
-The research suite ran on 2026-11-24 with the v0.1.0 hook and `claude-sonnet-5-5`: 45 cases × 4 arms × 2 runs = 360
-runs, $49.27 for the agents and $7.25 for blinded judging and the comment audit. Full report and caveats:
-[docs/results/research-2026-11-24.md](docs/results/research-2026-11-24.md).
+**v0.2.0** (2026-11-25): research suite, 45 cases × arms A, B, D × 2 runs = 270 runs with `claude-sonnet-5-5`. Agents
+cost $25.95 and blinded judging $14.02. Full report and caveats:
+[docs/results/v0.2-research-2026-11-25.md](docs/results/v0.2-research-2026-11-25.md).
 
-| Metric (mean per run) | A: no plugin | B: skill | C: hook, minimal | D: full |
-| :- | -: | -: | -: | -: |
-| Correctness | 100% | 100% | 96%¹ | 99% |
-| New non-directive comment lines | 2.91 | 2.07 | 1.72 | 1.98 |
-| Approx. cognitive complexity | 14.8 | 11.4 | 14.4 | 11.1 |
-| Maintainability grader PASS (per run) | 58% | 79% | 52% | 76% |
-| Hook rejections | n/a | n/a | 0.52 | 0.17 |
-| Rejected comments judged necessary | n/a | n/a | 68% | 53% |
-| Tokens | 86k | 99k | 97k | 102k |
-| Cost (USD) | 0.08 | 0.10 | 0.09 | 0.10 |
+| Metric (mean per run) | A: no plugin | B: skill only | D: full plugin |
+| :- | -: | -: | -: |
+| Correctness | 100% | 100% | 100% |
+| Approx. cognitive complexity | 14.6 | 11.4 | 10.9 |
+| New non-directive comment lines | 2.99 | 2.52 | 2.54 |
+| Surviving new comments judged unnecessary | 19% | 14% | 15% |
+| Maintainability grader PASS (per run) | 64% | 82% | 84% |
+| Tokens | 88k | 102k | 99k |
+| Cost (USD) | 0.08 | 0.10 | 0.10 |
 
-¹ All four failures were caused by two hook bugs that are fixed in 0.1.1.
+Blinded pairwise judge, decisive comparisons only:
 
-Blinded pairwise judge, A vs D, decisive comparisons only:
-
-| Question | D preferred |
-| :- | -: |
-| Readability, comments removed | 77% [64%, 87%] |
-| Identifiers, comments removed | 100% (47 of 47) |
-| Maintainability, code as written | 37% [26%, 49%] |
+| Question | D preferred over A | D preferred over B |
+| :- | -: | -: |
+| Readability, comments removed | 73% [59%, 83%] | 34% [21%, 51%] |
+| Identifiers, comments removed | 100% (49 of 49) | 33% |
+| Maintainability, code as written | 56% [44%, 67%] | 47% [34%, 60%] |
 
 What this means:
 
-- **The hypothesis is partly supported, and mostly by the skill.** With the skill, the code was more readable
-  structurally and had lower complexity, and correctness held. Arm B (skill only) did about as well as D. The hook
-  fired only 0.17 times per run in D. Arm C (hook without the skill) mostly deleted comments (16 of 24 revisions) and
-  did not reduce complexity.
-- **The plugin removes comments worth keeping.** With comments visible, the pairwise judge preferred the code written
-  without the plugin. In 39 of its 41 rationales, it cites context that D left out, such as the rule behind a regex or
-  the reason for a numeric clamp. The per-run maintainability grader, which used a different model and judged each run
-  alone, favored D. Treat this as an open problem, not a tie.
-- **The hook's precision is poor.** Even after the 0.1.1 fixes, about two thirds of the comments it rejected in arm C
-  were judged necessary.
+- **The skill does the work.** With it, code had better names, lower complexity, and the same correctness. It no
+  longer costs useful comments. With comments visible, the judge slightly prefers the plugin's code. Under 0.1.x it
+  preferred code written without the plugin (37%).
+- **The hook adds nothing measurable to readability.** Skill-only (B) was at least as good as the full plugin. In
+  0.1.x, blocking mode rejected mostly necessary comments, so the hook now only warns by default. It still asks before
+  edits that weaken linter documentation rules or change the readability config.
+- **These results come from one model, one suite, and 2 runs per case.** The intervals are wide.
 
-[Smoke suite pilot](docs/results/smoke-2026-11-24.md) (32 runs): the same direction with very wide intervals.
+**v0.1.x** (2026-11-24): 360 runs with the blocking hook. Its structural gains were similar, but the judge preferred code
+written without the plugin when comments were visible, and about two thirds of the comments the hook rejected were
+judged necessary. Two hook bugs it found were fixed in 0.1.1. Report:
+[docs/results/research-2026-11-24.md](docs/results/research-2026-11-24.md).
+[Smoke pilot](docs/results/smoke-2026-11-24.md) (32 runs).
 
 ### Reproduce
 
