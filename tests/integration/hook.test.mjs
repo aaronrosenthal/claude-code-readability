@@ -248,7 +248,7 @@ test('large files are handled within the timeout budget', async () => {
 
 test('Windows-style paths in payloads are handled', async () => {
   const result = await runHook(writePayload('C:\\project\\src\\total.ts', NARRATION, { cwd: 'C:\\project' }), {
-    env: { CLAUDE_PLUGIN_DATA: fs.mkdtempSync(path.join(os.tmpdir(), 'rd ')), READABILITY_USER_CONFIG: '/nonexistent' },
+    env: { CLAUDE_PLUGIN_DATA: fs.mkdtempSync(path.join(os.tmpdir(), 'rd ')), READABILITY_USER_CONFIG: '/nonexistent', READABILITY_MODE: 'balanced' },
   });
   assert.equal(result.code, 0);
   if (process.platform === 'win32') assert.equal(result.decision, 'deny');
